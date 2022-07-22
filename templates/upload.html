@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <form enctype="multipart/form-data">
+        {% csrf_token %}
+        <img id="image" width="700" height="500" />
+        <br/>
+        <input type="file" onchange="selectImage(this);" name="picture" id="picture"/>
+        <br/>
+        <input id="submit-btn" type="button" value="提交">
+    </form>
+    <div>
+        <label>处理方式</label>
+        <select id="select">
+            <option id="histogram" value="histogram">直方图</option>
+            <option id="greyHistogram" value="greyHistogram">灰度直方图</option>
+            <option id="colorHistogram" value="colorHistogram">彩色直方图</option>
+            <option id="piecewiseLinearProcessing" value="piecewiseLinearProcessing">分段线性处理</option>
+            <option id="enlarge" value="enlarge">放大</option>
+            <option id="move" value="move">平移</option>
+            <option id="spin" value="spin">旋转</option>
+            <option id="horizontalFlip" value="horizontalFlip">水平镜像</option>
+            <option id="verticalFlip" value="verticalFlip">垂直镜像</option>
+            <option id="crossFlip" value="crossFlip">对角线镜像</option>
+            <option id="affineTransformation" value="affineTransformation">仿射变换</option>
+            <option id="enhance" value="enhance">图片增强</option>
+            <option id="robs" value="robs">使用 Roberts 算法提取图像边缘</option>
+            <option id="sob" value="sob">使用 Sobel 算子提取边缘。</option>
+            <option id="lap" value="lap">使用 Laplacian 算子提取边缘</option>
+            <option id="log" value="log">使用 LoG 算子提取边缘</option>
+            <option id="cny" value="cny">使用Canny 算子提取边缘</option>
+            <option id="MeanFilter" value="MeanFilter">均值滤波器</option>
+            <option id="MedFilter" value="MedFilter">中值滤波器</option>
+            <option id="HoughLineChange" value="HoughLineChange">Hough线段变化</option>
+            <option id="erode" value="erode">腐蚀</option>
+            <option id="dialate" value="dialate">膨胀</option>
+            <option id="sp_noise" value="sp_noise">雪花噪声</option>
+            <option id="gasuss_noise" value="gasuss_noise">高斯噪声</option>
+            <option id="highPassFilter" value="highPassFilter">高通滤波</option>
+            <option id="IdealLowPassFiltering" value="IdealLowPassFiltering">理想低通滤波</option>
+            <option id="butterworth_low_filter" value="butterworth_low_filter">Butterworth低通滤波器</option>
+            <option id="IdealHighPassFiltering" value="IdealHighPassFiltering">理想高通滤波</option>
+            <option id="butterworth_high_filter" value="butterworth_high_filter">Butterworth高通滤波器</option>
+            <option id="sharpen" value="sharpen">锐化</option>
+
+        </select>
+    </div>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+    $('#submit-btn').on('click',function () {
+        var formData = new FormData();
+        var select = document.getElementById("select")
+        var url='/'+select.options[select.selectedIndex].value+'/'
+        formData.append("picture",$("#picture")[0].files[0]);
+        formData.append("csrfmiddlewaretoken",$("[name='csrfmiddlewaretoken']").val());
+        $.ajax({
+            processData:false,
+            contentType:false,
+            url:url,
+            type:'post',
+            data:formData,
+            success:function (arg) {
+                if (arg.state === 0){
+                    alert('提交失败')
+                }
+                else {
+                    alert('提交成功')
+                    var picture=document.getElementById("image")
+                    picture.src=arg.state
+                }
+            }
+        })
+    });
+    </script>
+    <script>
+        let image = '';
+
+        function selectImage(file) {
+                if (!file.files || !file.files[0]) {
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = function (evt) {
+                    document.getElementById('image').src = evt.target.result;
+                    image = evt.target.result;
+                }
+                reader.readAsDataURL(file.files[0]);
+            }
+    </script>
+</body>
+</html>
+
+
