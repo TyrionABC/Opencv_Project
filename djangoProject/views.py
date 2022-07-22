@@ -827,8 +827,7 @@ def IdealLowPassFiltering(request):
                 D = np.sqrt((i - x0) ** 2 + (j - y0) ** 2)
                 if D <= D0:
                     h1[i][j] = 1
-        result = np.multiply(f_shift, h1)
-        cv2.imwrite(img_path, result)
+        cv2.imwrite(img_path, frequency_filter(f_shift, h1))
         try:
             data = {'state': 'static/media/' + name}
         except:
@@ -849,6 +848,7 @@ def butterworth_low_filter(request):
             for c in image.chunks():
                 pic.write(c)
         img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         D0 = 20
         rank = 2
         h, w = img.shape[:2]
@@ -859,7 +859,7 @@ def butterworth_low_filter(request):
             for j in range(w):
                 d = np.sqrt((i - u) ** 2 + (j - v) ** 2)
                 filter_img[i, j] = 1 / (1 + 0.414 * (d / D0) ** (2 * rank))
-        cv2.imwrite(img_path, filter_img)
+        cv2.imwrite(img_path, frequency_filter(img, filter_img))
         try:
             data = {'state': 'static/media/' + name}
         except:
@@ -898,8 +898,7 @@ def IdealHighPassFiltering(request):
                 D = np.sqrt((i - x0) ** 2 + (j - y0) ** 2)
                 if D >= D0:
                     h1[i][j] = 1
-        result = np.multiply(f_shift, h1)
-        cv2.imwrite(img_path, result)
+        cv2.imwrite(img_path, frequency_filter(f_shift, h1))
         try:
             data = {'state': 'static/media/' + name}
         except:
@@ -920,6 +919,7 @@ def butterworth_high_filter(request):
             for c in image.chunks():
                 pic.write(c)
         img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         D0 = 40
         rank = 2
         h, w = img.shape[:2]
@@ -930,9 +930,25 @@ def butterworth_high_filter(request):
             for j in range(w):
                 d = np.sqrt((i - u) ** 2 + (j - v) ** 2)
                 filter_img[i, j] = 1 / (1 + (D0 / d) ** (2 * rank))
-        cv2.imwrite(img_path, filter_img)
+        cv2.imwrite(img_path, frequency_filter(img, filter_img))
         try:
             data = {'state': 'static/media/' + name}
         except:
             data = {'state': 0}
         return JsonResponse(data)
+
+
+def frequency_filter(image, filter):
+    """
+    :param image:
+    :param filter: 频域变换函数
+    :return:
+    """
+    fftImg = np.fft.fft2(image) #对图像进行傅里叶变换
+    fftImgShift = np.fft.fftshift(fftImg)#傅里叶变换后坐标移动到图像中心
+    handle_fftImgShift1 = fftImgShift*filter # 对傅里叶变换后的图像进行频域变换
+
+    handle_fftImgShift2 = np.fft.ifftshift(handle_fftImgShift1)
+    handle_fftImgShift3 = np.fft.ifft2(handle_fftImgShift2)
+    handle_fftImgShift4 = np.real(handle_fftImgShift3)#傅里叶反变换后取频域
+    return np.uint8(handle_fftImgShift4)
