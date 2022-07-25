@@ -1,24 +1,54 @@
-import base64
 import random
 from tkinter import Image
-import numpy as np
+import random
+from tkinter import Image
+import dlib
 import cv2
-import sys
 import cv2 as cv
-import matplotlib.pyplot as plt
 import numpy as np
+import cmake
 from PIL import Image
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
+from imutils import face_utils
 from matplotlib import pyplot as plt
-
-
 from djangoProject import settings
 
 
 # 主页面
 def to_img_load(request):
     return render(request, 'upload.html')
+
+
+# 人脸识别
+def faceDetect(request):
+    if request.method == 'POST':
+        image = request.FILES.get('picture')
+        name = image.name
+        print(name)
+        path = settings.MEDIA_ROOT + '/' + image.name
+        with open(path, 'wb') as pic:
+            for c in image.chunks():
+                pic.write(c)
+        img = cv2.imread(path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        im = np.float32(gray)
+
+        gx = cv2.Sobel(im, cv2.CV_32F, 1, 0, ksize=1)
+        gy = cv2.Sobel(im, cv2.CV_32F, 0, 1, ksize=1)
+        mag, angle = cv2.cartToPolar(gx, gy, angleInDegrees=True)
+        face_detect = dlib.get_frontal_face_detector()
+        rects = face_detect(gray, 1)
+        for (i, rect) in enumerate(rects):
+            (x, y, w, h) = face_utils.rect_to_bb(rect)
+            cv2.rectangle(gray, (x, y), (x + w, y + h), (255, 255, 255), 3)
+        cv2.imwrite(path, gray)
+        try:
+            data = {'state': 'static/media/' + name}
+        except:
+            data = {'state': 0}
+        return JsonResponse(data)
+
 
 
 # 绘制直方图
@@ -755,27 +785,6 @@ def highPassFilter(request):
 ##########
 #########
 
-
-# Roberts因子锐化
-def Roberts(image):
-    if request.method == 'POST':
-        image = request.FILES.get('picture')
-        name = image.name
-        img_path = settings.MEDIA_ROOT + '/' + name
-        with open(img_path, 'wb') as pic:
-            for c in image.chunks():
-                pic.write(c)
-        img = cv2.imread(img_path)
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        img_Roberts = np.zeros(img.shape, dtype=int)
-        for i in range(1, img.shape[0] - 1):  # 第一列和最后一列不用处理
-            for j in range(1, img.shape[1] - 1):
-                img_Roberts[i][j] = abs((int)(img[i + 1][j + 1]) - (int)(img[i][j])) + abs(
-                    (int)(img[i + 1][j]) - (int)(img[i][j + 1]))
-        result = np.array(img_Roberts)
-        plt.subplot(244), plt.title("4.Roberts锐化后"), plt.axis('off')
-        plt.imshow(img_Roberts, cmap="gray")
-        plt.show()
 
 
 def sharpen(request):

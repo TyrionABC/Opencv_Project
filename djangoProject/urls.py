@@ -48,5 +48,6 @@ urlpatterns = [
     path('butterworth_low_filter/', views.butterworth_low_filter),
     path('IdealHighPassFiltering/', views.IdealHighPassFiltering),
     path('butterworth_high_filter/', views.butterworth_high_filter),
-    path('sharpen/', views.sharpen)
+    path('sharpen/', views.sharpen),
+    path('faceDetect/', views.faceDetect)
 ]
